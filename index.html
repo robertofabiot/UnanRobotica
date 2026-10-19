@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Prototipo 3D: Hogar Inteligente DIY Portátil - UNAN Robótica</title>
+  
+  <!-- Estilos CSS Modernos y Responsivos -->
+  <style>
+    :root {
+      --bg-dark: #0b1120;
+      --panel-bg: rgba(15, 23, 42, 0.88);
+      --panel-border: rgba(56, 189, 248, 0.22);
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --cardboard: #d4a373;
+      --wood: #e9c46a;
+      --pet: #38bdf8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+    }
+
+    /* Contenedor del lienzo WebGL 3D */
+    #canvas-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      cursor: grab;
+    }
+    #canvas-container:active { cursor: grabbing; }
+
+    /* Barra Superior de Herramientas y Estado */
+    #top-bar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .brand-badge {
+      pointer-events: auto;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 10px 18px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+    }
+    .brand-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #fff;
+    }
+    .brand-text p {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+    .btn-icon {
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .btn-icon:hover {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .btn-icon.active {
+      background: var(--accent);
+      color: #0b1120;
+      border-color: var(--accent);
+    }
+
+    /* Panel Lateral de Control IoT */
+    #sidebar-controls {
+      width: 380px;
+      height: 100%;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border-left: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    }
+    #sidebar-controls.collapsed {
+      transform: translateX(100%);
+    }
+
+    .sidebar-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sidebar-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sidebar-content::-webkit-scrollbar { width: 6px; }
+    .sidebar-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+    /* Módulos de Control */
+    .control-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 14px;
+      transition: border-color 0.2s ease;
+    }
+    .control-card:hover { border-color: rgba(56, 189, 248, 0.3); }
+    .card-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-title span.status {
+      font-size: 10px;
+      text-transform: none;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.1);
+      color: var(--text-muted);
+    }
+    .card-title span.status.active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .card-title span.status.alert {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    /* Grid de Luces por Zonas */
+    .lights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .light-btn {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 10px 8px;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+    .light-btn:hover {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: var(--accent);
+    }
+    .light-btn.active {
+      background: rgba(250, 204, 21, 0.15);
+      border-color: #facc15;
+      color: #fef08a;
+      box-shadow: 0 0 14px rgba(250, 204, 21, 0.25);
+    }
+    .light-btn .icon { font-size: 18px; }
+    .light-btn .name { font-size: 11px; font-weight: 600; }
+    .light-btn .sub { font-size: 9px; color: var(--text-muted); }
+
+    /* Botón de Acción Principal */
+    .btn-action {
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border: 1px solid #38bdf8;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+      background: linear-gradient(135deg, #0369a1, #0284c7);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+    .btn-action.secondary {
+      background: rgba(51, 65, 85, 0.7);
+      border-color: rgba(255,255,255,0.12);
+    }
+    .btn-action.secondary:hover {
+      background: rgba(71, 85, 105, 0.9);
+      border-color: var(--accent);
+    }
+    .btn-action.danger {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      border-color: #ef4444;
+    }
+
+    /* Sliders de control */
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .slider-header span.val {
+      font-weight: 700;
+      color: var(--accent);
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+      border: 2px solid #0f172a;
+    }
+
+    /* Modos de Visualización Inferior (Presets y Capas) */
+    #bottom-bar {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .floating-pill {
+      pointer-events: auto;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      border-radius: 30px;
+      padding: 6px 12px;
+      display: flex;
+      gap: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .pill-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .pill-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .pill-btn.active {
+      background: var(--accent);
+      color: #0b1120;
+      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Tooltip / Hotspot 3D */
+    .annotation-label {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transition: opacity 0.2s ease;
+    }
+    .annotation-label::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4px solid var(--accent);
+    }
+
+    /* Modal Emergente para Planos y Materiales */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: #0f172a;
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 { font-size: 17px; font-weight: 700; color: #fff; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close:hover { color: #fff; }
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      body { flex-direction: column; }
+      #sidebar-controls {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        height: 60vh;
+        border-left: none;
+        border-top: 1px solid var(--panel-border);
+        border-radius: 20px 20px 0 0;
+      }
+      #sidebar-controls.collapsed { transform: translateY(100%); }
+    }
+  </style>
+
+  <!-- Inclusión de Three.js y OrbitControls (Local con fallback a CDN) -->
+  <script src="js/three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/scr' + 'ipt>');
+    }
+  </script>
+  <script src="js/OrbitControls.js"></script>
+  <script>
+    if (typeof THREE.OrbitControls === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/scr' + 'ipt>');
+    }
+  </script>
+  <script src="js/tween.umd.js"></script>
+  <script>
+    if (typeof TWEEN === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"><\/scr' + 'ipt>');
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Contenedor 3D WebGL -->
+  <div id="canvas-container">
+    <!-- Barra Superior -->
+    <div id="top-bar">
+      <div class="brand-badge">
+        <div class="brand-logo">UR</div>
+        <div class="brand-text">
+          <h1>Smart Home DIY Portátil (30x22x10 cm)</h1>
+          <p>UNAN Robótica &bull; Bricolaje Sostenible &bull; Doble Fondo (2 cm)</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn-icon" id="btn-sound" onclick="toggleAudio()" title="Activar/Silenciar Audio Sintetizado">
+          <span id="sound-icon">🔊</span> Audio ON
+        </button>
+        <button class="btn-icon" onclick="openModal('planos')" title="Ver Plano de Corte y Despiece">
+          📐 Plano de Corte
+        </button>
+        <button class="btn-icon" onclick="openModal('materiales')" title="Lista de Materiales y Presupuesto">
+          📋 Lista BOM DIY
+        </button>
+        <button class="btn-icon" onclick="iniciarTourGuiado()" title="Explicación Paso a Paso del Prototipo">
+          🎓 Tour Guiado
+        </button>
+        <button class="btn-icon" id="btn-toggle-sidebar" onclick="toggleSidebar()">
+          ☰ Controles
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra Inferior de Visualización y Capas -->
+    <div id="bottom-bar">
+      <!-- Modos de Cámara -->
+      <div class="floating-pill">
+        <button class="pill-btn active" id="cam-iso" onclick="setCameraPreset('iso')">🏠 Isométrica</button>
+        <button class="pill-btn" id="cam-top" onclick="setCameraPreset('top')">📐 Planta</button>
+        <button class="pill-btn" id="cam-front" onclick="setCameraPreset('front')">🚪 Fachada</button>
+        <button class="pill-btn" id="cam-garage" onclick="setCameraPreset('garage')">🚗 Garaje/RFID</button>
+        <button class="pill-btn" id="cam-bottom" onclick="setCameraPreset('bottom')">🔌 Doble Fondo</button>
+      </div>
+
+      <!-- Modos Visuales y Despiece -->
+      <div class="floating-pill">
+        <button class="pill-btn active" id="mode-realistic" onclick="setVisualMode('realistic')">🎨 Realista</button>
+        <button class="pill-btn" id="mode-materials" onclick="setVisualMode('materials')">♻️ Materiales</button>
+        <button class="pill-btn" id="mode-xray" onclick="setVisualMode('xray')">⚡ Rayos X / Cables</button>
+        <button class="pill-btn" id="mode-dimensions" onclick="setVisualMode('dimensions')">📏 Cotas (cm)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Lateral de Control IoT -->
+  <aside id="sidebar-controls">
+    <div class="sidebar-header">
+      <h2>🎛️ Panel de Control Domótico</h2>
+      <button class="btn-icon" style="padding: 4px 8px;" onclick="toggleSidebar()">✕</button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- 1. VISTA EXPLOTADA / DOBLE FONDO -->
+      <div class="control-card">
+        <div class="card-title">
+          <span>📦 Estructura & Doble Fondo</span>
+          <span class="status active" id="tag-falsofondo">Cerrado</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+          Zócalo de 2 cm que oculta la Protoboard y ESP32. Protege los cables durante el transporte en mochila.
+        </p>
+        <button class="btn-action secondary" id="btn-open-drawer" onclick="toggleDobleFondo()">
+          🔓 Abrir Compartimento Doble Fondo
+        </button>
+      </div>
+
+      <!-- 2. ILUMINACIÓN INDEPENDIENTE POR HABITACIÓN (4 ZONAS) -->
+      <div class="control-card">
+        <div class="card-title">
+          <span>💡 Iluminación por Zonas (LEDs 5mm)</span>
+          <span class="status" id="tag-luces-total">0/4 ON</span>
+        </div>
+        <div class="lights-grid">
+          <button class="light-btn" id="btn-led-sala" onclick="toggleLED('sala')">
+            <span class="icon">🛋️</span>
+            <span class="name">Sala</span>
+            <span class="sub" id="st-sala">Apagado</span>
+          </button>
+          <button class="light-btn" id="btn-led-dorm" onclick="toggleLED('dormitorio')">
+            <span class="icon">🛏️</span>
+            <span class="name">Dormitorio</span>
+            <span class="sub" id="st-dorm">Apagado</span>
+          </button>
+          <button class="light-btn" id="btn-led-coc" onclick="toggleLED('cocina')">
+            <span class="icon">🍳</span>
+            <span class="name">Cocina</span>
+            <span class="sub" id="st-coc">Apagado</span>
+          </button>
+          <button class="light-btn" id="btn-led-gar" onclick="toggleLED('garaje')">
+            <span class="icon">🚗</span>
+            <span class="name">Garaje</span>
+            <span class="sub" id="st-gar">Apagado</span>
+          </button>
+        </div>
+        <button class="btn-action secondary" style="margin-top: 8px;" onclick="toggleTodasLasLuces()">
+          Alternar Todas las Luces
+        </button>
+      </div>
+
+      <!-- 3. GARAJE: SERVOMOTOR SG90 Y RFID RC522 -->
+      <div class="control-card">
+        <div class="card-title">
+          <span>🚗 Garaje Inteligente (SG90 + RFID)</span>
+          <span class="status" id="tag-barrera">Barrera Cerrada</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+          Barrera levadiza de palito de madera accionada por SG90 y lector RFID en pared exterior.
+        </p>
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <button class="btn-action" id="btn-barrera" onclick="toggleBarreraServo()">
+            🚧 Mover Barrera (SG90)
+          </button>
+          <button class="btn-action secondary" onclick="simularPaseRFID()" title="Acercar tarjeta al lector RFID RC522">
+            💳 Pasar Tarjeta RFID
+          </button>
+        </div>
+        <div style="font-size: 10px; color: var(--text-muted); background: rgba(0,0,0,0.25); padding: 6px 10px; border-radius: 6px;">
+          Lector Lateral: <strong id="rfid-status" style="color: var(--accent);">Esperando tarjeta...</strong>
+        </div>
+      </div>
+
+      <!-- 4. SISTEMA ANTIRROBO (HC-SR04 + BUZZER) -->
+      <div class="control-card">
+        <div class="card-title">
+          <span>🚨 Radar Antirrobo (HC-SR04 + Buzzer)</span>
+          <span class="status active" id="tag-alarma">VIGILANDO</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+          Sensor ultrasónico en fachada principal y buzzer central para propagación acústica.
+        </p>
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Distancia de Detección Frontal:</span>
+            <span class="val" id="val-distancia">35 cm</span>
+          </div>
+          <input type="range" id="range-distancia" min="3" max="50" value="35" oninput="cambiarDistanciaUltrasonico(this.value)">
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+          <button class="btn-action danger" id="btn-trigger-alarm" onclick="forzarDisparoAlarma()">
+            ⚠️ Simular Intruso (&lt;18cm)
+          </button>
+          <button class="btn-action secondary" onclick="resetearAlarma()">
+            Reset Alarma
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. CLIMATIZACIÓN: SENSOR DHT11 TRAS REJILLA -->
+      <div class="control-card">
+        <div class="card-title">
+          <span>🌡️ Climatización (DHT11 en Sala)</span>
+          <span class="status active" id="tag-clima">Normal</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+          Montado tras rejilla calada en cartón para convección natural, lejos del calor del LED.
+        </p>
+        <div class="slider-row">
+          <div class="slider-header">
+            <span>Temperatura Sala:</span>
+            <span class="val" id="val-temperatura">24.5 °C</span>
+          </div>
+          <input type="range" id="range-temp" min="15" max="42" step="0.5" value="24.5" oninput="cambiarTemperatura(this.value)">
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+          <span>Humedad Relativa: <strong id="val-humedad" style="color:#38bdf8;">58%</strong></span>
+          <span>Flujo de Ventilación: <strong style="color:#10b981;">Activo</strong></span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MODAL: PLANO DE CORTE Y DESPIECE -->
+  <div class="modal-overlay" id="modal-planos">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📐 Plano de Corte y Despiece Técnico (DIY 1:1)</h3>
+        <button class="modal-close" onclick="closeModal('planos')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px;">
+          Este plano detalla las piezas necesarias en <strong>cartón corrugado simple</strong> (espesor ≈ 3.5 mm), 
+          <strong>palitos de madera de helado</strong> y <strong>recortes de plástico de botellas PET</strong>. 
+          Todas las uniones son a 90 grados reforzadas con escuadras triangulares.
+        </p>
+        <div style="background: #1e293b; border-radius: 8px; padding: 12px; margin-bottom: 14px; text-align: center;">
+          <iframe src="docs/planos_corte_despiece.svg" style="width: 100%; height: 420px; border: none; border-radius: 6px; background: white;"></iframe>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <a href="docs/planos_corte_despiece.svg" target="_blank" download="Plano_Corte_SmartHome_UNAN.svg" class="btn-action" style="width: auto;">
+            ⬇️ Descargar SVG Alta Resolución
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LISTA BOM Y MATERIALES RECICLADOS -->
+  <div class="modal-overlay" id="modal-materiales">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📋 Lista de Materiales (BOM) & Enfoque de Reciclaje</h3>
+        <button class="modal-close" onclick="closeModal('materiales')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+          <thead>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.15); text-align: left; color: var(--accent);">
+              <th style="padding: 8px;">Material / Componente</th>
+              <th style="padding: 8px;">Origen DIY / Comercial</th>
+              <th style="padding: 8px;">Función en la Maqueta</th>
+              <th style="padding: 8px;">Costo Est.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Cartón Corrugado Onda B</strong></td>
+              <td style="padding: 8px;">Cajas recicladas de encomiendas</td>
+              <td style="padding: 8px;">Base, piso, paredes y escuadras triangulares</td>
+              <td style="padding: 8px; color: #34d399;">$0.00 (Reciclado)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Palitos de Madera de Helado</strong></td>
+              <td style="padding: 8px;">Bajalenguas médicos o reciclados</td>
+              <td style="padding: 8px;">Marcos de vanos, dintel y barrera levadiza</td>
+              <td style="padding: 8px; color: #34d399;">$0.30</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Plástico PET Transparente</strong></td>
+              <td style="padding: 8px;">Botellas de gaseosa/agua de 2L</td>
+              <td style="padding: 8px;">Cristales ligeros e irrompibles de ventanas</td>
+              <td style="padding: 8px; color: #34d399;">$0.00 (Reciclado)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>ESP32 DevKit V1 (WiFi/BT)</strong></td>
+              <td style="padding: 8px;">Electrónica estándar</td>
+              <td style="padding: 8px;">Cerebro IoT, servidor web y control general</td>
+              <td style="padding: 8px;">$4.50</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Mini Protoboard + Cables</strong></td>
+              <td style="padding: 8px;">400 puntos en doble fondo</td>
+              <td style="padding: 8px;">Distribución eléctrica oculta y anti-tirones</td>
+              <td style="padding: 8px;">$2.00</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Servomotor SG90 9g</strong></td>
+              <td style="padding: 8px;">Micro servo analógico</td>
+              <td style="padding: 8px;">Mecanismo levadizo de barrera de garaje</td>
+              <td style="padding: 8px;">$1.50</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Módulo Lector RFID RC522</strong></td>
+              <td style="padding: 8px;">Módulo 13.56 MHz SPI</td>
+              <td style="padding: 8px;">Control de acceso vehicular en muro lateral</td>
+              <td style="padding: 8px;">$2.20</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Sensor Ultrasónico HC-SR04</strong></td>
+              <td style="padding: 8px;">Transductores de 40 kHz</td>
+              <td style="padding: 8px;">Radar de detección en fachada frontal</td>
+              <td style="padding: 8px;">$1.20</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 8px;"><strong>Sensor DHT11 + Buzzer + 4 LEDs</strong></td>
+              <td style="padding: 8px;">Componentes pasivos y discretos</td>
+              <td style="padding: 8px;">Climatización tras rejilla, sirena y luces 5mm</td>
+              <td style="padding: 8px;">$2.00</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px;">
+          <strong>Ventaja de Portabilidad en Mochila:</strong> Al utilizar cartón corrugado reciclado en lugar de MDF o madera contrachapada, el peso total de la estructura armada con todos los componentes y batería es de apenas <strong>420 gramos</strong>, minimizando la inercia durante caídas o sacudidas al caminar.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT PRINCIPAL THREE.JS Y LÓGICA INTERACTIVA -->
+  <script>
+    /* ========================================================================
+       1. SISTEMA DE AUDIO SINTETIZADO (WEB AUDIO API - ZERO DEPENDENCIAS)
+       ======================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playClick() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.04);
+      }
+      playServoWhine() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(280, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(340, this.ctx.currentTime + 0.3);
+        osc.frequency.linearRampToValueAtTime(260, this.ctx.currentTime + 0.6);
+        gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.6);
+      }
+      playRFIDBeep() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2200, this.ctx.currentTime);
+        osc.frequency.setValueAtTime(2700, this.ctx.currentTime + 0.07);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.16);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.16);
+      }
+      playAlarmWarble() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(2800, now);
+        osc.frequency.setValueAtTime(1900, now + 0.15);
+        osc.frequency.setValueAtTime(2800, now + 0.30);
+        osc.frequency.setValueAtTime(1900, now + 0.45);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(now + 0.6);
+      }
+    }
+    const audio = new SoundEngine();
+
+    function toggleAudio() {
+      audio.init();
+      audio.enabled = !audio.enabled;
+      document.getElementById('sound-icon').innerText = audio.enabled ? '🔊' : '🔇';
+      document.getElementById('btn-sound').classList.toggle('active', audio.enabled);
+    }
+    window.addEventListener('click', () => audio.init(), { once: true });
+
+    /* ========================================================================
+       2. GENERADORES DE TEXTURAS PROCEDURALES CANVAS (ALTA FIDELIDAD DIY)
+       ======================================================================== */
+    function generateCardboardTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512; canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      // Fondo base kraft
+      ctx.fillStyle = '#caa26f';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Fibras y vetas del papel reciclado kraft
+      for (let i = 0; i < 4000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const len = 3 + Math.random() * 8;
+        const shade = Math.random() > 0.5 ? 'rgba(140, 90, 45, ' : 'rgba(235, 210, 175, ';
+        ctx.strokeStyle = shade + (0.05 + Math.random() * 0.15) + ')';
+        ctx.lineWidth = 0.5 + Math.random() * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + len, y + (Math.random() - 0.5) * 2);
+        ctx.stroke();
+      }
+
+      // Ondulaciones sutiles bajo la piel del cartón corrugado
+      for (let x = 0; x < 512; x += 16) {
+        ctx.fillStyle = 'rgba(160, 110, 60, 0.07)';
+        ctx.fillRect(x, 0, 6, 512);
+        ctx.fillStyle = 'rgba(255, 240, 215, 0.05)';
+        ctx.fillRect(x + 6, 0, 6, 512);
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    function generateCardboardFluteTexture() {
+      // Borde del cartón con onda (fluting) visible
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      // Capa superior e inferior (linerboards)
+      ctx.fillStyle = '#b08350';
+      ctx.fillRect(0, 0, 256, 10);
+      ctx.fillRect(0, 54, 256, 10);
+      // Relleno central oscuro (huecos de onda)
+      ctx.fillStyle = '#654321';
+      ctx.fillRect(0, 10, 256, 44);
+      // Onda sinusoidal de papel medio
+      ctx.strokeStyle = '#caa26f';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let x = 0; x < 256; x++) {
+        const y = 32 + Math.sin(x * 0.25) * 18;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    function generateWoodTexture() {
+      // Textura para palitos de helado (pino claro)
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#e8c99b';
+      ctx.fillRect(0, 0, 256, 256);
+      // Vetas longitudinales
+      for (let i = 0; i < 200; i++) {
+        const y = Math.random() * 256;
+        ctx.strokeStyle = 'rgba(180, 130, 80, ' + (0.08 + Math.random() * 0.18) + ')';
+        ctx.lineWidth = 1 + Math.random() * 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(80, y + Math.sin(i) * 6, 180, y - Math.cos(i) * 6, 256, y);
+        ctx.stroke();
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    function generateBreadboardTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512; canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, 512, 256);
+      // Líneas de bus (+ roja, - azul)
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(10, 16, 492, 3);
+      ctx.fillStyle = '#3b82f6'; ctx.fillRect(10, 32, 492, 3);
+      ctx.fillStyle = '#3b82f6'; ctx.fillRect(10, 220, 492, 3);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(10, 236, 492, 3);
+      // Ranura central divisoria
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(0, 124, 512, 8);
+      // Matriz de puntos de inserción (orificios)
+      ctx.fillStyle = '#1e293b';
+      for (let x = 20; x < 500; x += 12) {
+        // Pines bus superior e inferior
+        ctx.fillRect(x, 14, 4, 6);
+        ctx.fillRect(x, 30, 4, 6);
+        ctx.fillRect(x, 218, 4, 6);
+        ctx.fillRect(x, 234, 4, 6);
+        // Filas de componentes
+        for (let y = 50; y < 120; y += 14) ctx.fillRect(x, y, 4, 6);
+        for (let y = 140; y < 210; y += 14) ctx.fillRect(x, y, 4, 6);
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    /* ========================================================================
+       3. INICIALIZACIÓN DE LA ESCENA THREE.JS
+       ======================================================================== */
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b1120);
+    scene.fog = new THREE.FogExp2(0x0b1120, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(28, 32, 42);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 + 0.05; // No pasar mucho debajo del suelo
+    controls.minDistance = 12;
+    controls.maxDistance = 85;
+    controls.target.set(0, 5, 0);
+
+    // Sistema de Iluminación Ambiental y de Estudio
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.65);
+    hemiLight.position.set(0, 50, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff7ed, 0.95);
+    dirLight.position.set(25, 45, 30);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 10;
+    dirLight.shadow.camera.far = 120;
+    const d = 26;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    dirLight.shadow.bias = -0.0005;
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.35);
+    fillLight.position.set(-30, 20, -25);
+    scene.add(fillLight);
+
+    // Superficie / Mesa de Trabajo DIY
+    const tableGeo = new THREE.PlaneGeometry(160, 160);
+    const tableMat = new THREE.MeshStandardMaterial({
+      color: 0x111827,
+      roughness: 0.85,
+      metalness: 0.1
+    });
+    const tableMesh = new THREE.Mesh(tableGeo, tableMat);
+    tableMesh.rotation.x = -Math.PI / 2;
+    tableMesh.position.y = -0.05;
+    tableMesh.receiveShadow = true;
+    scene.add(tableMesh);
+
+    // Grid técnico suave sobre la mesa
+    const grid = new THREE.GridHelper(100, 50, 0x1e293b, 0x131f37);
+    grid.position.y = 0;
+    scene.add(grid);
+
+    /* ========================================================================
+       4. CONSTRUCCIÓN GEOMÉTRICA DE LA MAQUETA SMART HOME (DIY RECICLADA)
+       Escala: 1 unidad = 1 cm
+       Medidas: 30 cm de largo (X) x 22 cm de profundidad (Z) x 10 cm de alto (Y)
+       Doble fondo: 2 cm de altura técnica (Y = 0 a 2 cm)
+       Paredes superiores: 8 cm de altura útil (Y = 2 a 10 cm)
+       ======================================================================== */
+    const cardboardTex = generateCardboardTexture();
+    const cardboardFluteTex = generateCardboardFluteTexture();
+    const woodTex = generateWoodTexture();
+    const breadboardTex = generateBreadboardTexture();
+
+    // Materiales PBR
+    const matCardboard = new THREE.MeshStandardMaterial({
+      map: cardboardTex,
+      roughness: 0.88,
+      metalness: 0.02,
+      bumpMap: cardboardTex,
+      bumpScale: 0.04
+    });
+
+    const matFlutingEdge = new THREE.MeshStandardMaterial({
+      map: cardboardFluteTex,
+      roughness: 0.9,
+      metalness: 0.0
+    });
+
+    const matWoodStick = new THREE.MeshStandardMaterial({
+      map: woodTex,
+      roughness: 0.65,
+      metalness: 0.05
+    });
+
+    const matPETPlastic = new THREE.MeshPhysicalMaterial({
+      color: 0xdff4fc,
+      transparent: true,
+      opacity: 0.45,
+      roughness: 0.1,
+      metalness: 0.05,
+      transmission: 0.75,
+      ior: 1.52,
+      reflectivity: 0.8
+    });
+
+    // Grupos principales para animación y despiece
+    const houseMasterGroup = new THREE.Group();
+    scene.add(houseMasterGroup);
+
+    // Grupo de la casa superior (se eleva o separa en la vista de doble fondo)
+    const upperHouseGroup = new THREE.Group();
+    upperHouseGroup.position.set(0, 0, 0);
+    houseMasterGroup.add(upperHouseGroup);
+
+    // Grupo del compartimento inferior (falso fondo)
+    const baseBottomGroup = new THREE.Group();
+    houseMasterGroup.add(baseBottomGroup);
+
+    /* --- 4.1 BASE Y ZÓCALOS DEL DOBLE FONDO (Y = 0 a 2 cm) --- */
+    // Placa base inferior de apoyo (30 x 22 cm x 0.4 cm)
+    const bottomPlateGeo = new THREE.BoxGeometry(30, 0.4, 22);
+    const bottomPlateMesh = new THREE.Mesh(bottomPlateGeo, matCardboard);
+    bottomPlateMesh.position.set(0, 0.2, 0);
+    bottomPlateMesh.receiveShadow = true;
+    bottomPlateMesh.castShadow = true;
+    baseBottomGroup.add(bottomPlateMesh);
+
+    // Zócalos perimetrales del falso fondo (h = 2.0 cm)
+    function createPerimeterZocalo(w, h, d, x, y, z) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geo, matCardboard);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      baseBottomGroup.add(mesh);
+      return mesh;
+    }
+    // Zócalo frontal (30 x 2 x 0.4 cm)
+    createPerimeterZocalo(30, 1.8, 0.4, 0, 1.1, 10.8);
+    // Zócalo trasero con orificio USB (30 x 2 x 0.4 cm)
+    createPerimeterZocalo(12, 1.8, 0.4, -9, 1.1, -10.8);
+    createPerimeterZocalo(15, 1.8, 0.4, 7.5, 1.1, -10.8);
+    // Zócalo lateral izquierdo (0.4 x 2 x 21.2 cm)
+    createPerimeterZocalo(0.4, 1.8, 21.2, -14.8, 1.1, 0);
+    // Zócalo lateral derecho (0.4 x 2 x 21.2 cm)
+    createPerimeterZocalo(0.4, 1.8, 21.2, 14.8, 1.1, 0);
+
+    /* --- 4.2 COMPONENTES EN EL INTERIOR DEL DOBLE FONDO --- */
+    // Mini Protoboard (8.2 x 5.5 x 1.0 cm)
+    const bbGeo = new THREE.BoxGeometry(8.2, 0.9, 5.5);
+    const bbMat = new THREE.MeshStandardMaterial({ map: breadboardTex, roughness: 0.5 });
+    const bbMesh = new THREE.Mesh(bbGeo, bbMat);
+    bbMesh.position.set(-6, 0.85, -2);
+    bbMesh.castShadow = true;
+    baseBottomGroup.add(bbMesh);
+
+    // Microcontrolador ESP32 DevKit V1 (5.2 x 2.8 x 1.0 cm)
+    const espGroup = new THREE.Group();
+    espGroup.position.set(4, 0.7, -2);
+    baseBottomGroup.add(espGroup);
+
+    // Placa PCB negra ESP32
+    const espPcbGeo = new THREE.BoxGeometry(5.2, 0.2, 2.8);
+    const espPcbMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.3 });
+    const espPcb = new THREE.Mesh(espPcbGeo, espPcbMat);
+    espGroup.add(espPcb);
+
+    // Blindaje metálico RF (ESP-WROOM-32)
+    const shieldGeo = new THREE.BoxGeometry(1.8, 0.25, 1.8);
+    const shieldMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9, roughness: 0.2 });
+    const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
+    shieldMesh.position.set(-1.1, 0.2, 0);
+    espGroup.add(shieldMesh);
+
+    // Conector MicroUSB
+    const usbGeo = new THREE.BoxGeometry(0.8, 0.3, 0.6);
+    const usbMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.8 });
+    const usbMesh = new THREE.Mesh(usbGeo, usbMat);
+    usbMesh.position.set(2.6, 0.15, 0);
+    espGroup.add(usbMesh);
+
+    // LED de encendido ESP32 (Rojo)
+    const espLedGeo = new THREE.BoxGeometry(0.2, 0.1, 0.2);
+    const espLedMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const espLedMesh = new THREE.Mesh(espLedGeo, espLedMat);
+    espLedMesh.position.set(1.5, 0.2, 0.8);
+    espGroup.add(espLedMesh);
+
+    // Mazo de cables DuPont trenzados de colores
+    const cableColors = [0xef4444, 0x3b82f6, 0x10b981, 0xf59e0b, 0x8b5cf6, 0x1e293b];
+    for (let c = 0; c < 8; c++) {
+      const curve = new THREE.CubicBezierCurve3(
+        new THREE.Vector3(-3 + Math.random() * 2, 1.2, -2 + Math.random() * 2),
+        new THREE.Vector3(-1 + (c % 3), 1.6, -1),
+        new THREE.Vector3(2, 1.4, -2 + (c * 0.4)),
+        new THREE.Vector3(3 + (c * 0.2), 0.9, -2)
+      );
+      const tubeGeo = new THREE.TubeGeometry(curve, 16, 0.08, 6, false);
+      const tubeMat = new THREE.MeshStandardMaterial({ color: cableColors[c % cableColors.length], roughness: 0.5 });
+      const cableMesh = new THREE.Mesh(tubeGeo, tubeMat);
+      baseBottomGroup.add(cableMesh);
+    }
+
+    /* --- 4.3 PISO HABITABLE (SEPARADOR TÉCNICO A Y = 2.0 cm) --- */
+    // Placa intermedia de cartón corrugado con pasacables
+    const livingFloorGeo = new THREE.BoxGeometry(29.2, 0.4, 21.2);
+    const livingFloorMesh = new THREE.Mesh(livingFloorGeo, matCardboard);
+    livingFloorMesh.position.set(0, 2.0, 0);
+    livingFloorMesh.receiveShadow = true;
+    livingFloorMesh.castShadow = true;
+    upperHouseGroup.add(livingFloorMesh);
+
+    // Ojales pasacables en el suelo habitable (anillos negros)
+    function createWireGrommet(x, z, label) {
+      const ringGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.42, 16);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.set(x, 2.01, z);
+      upperHouseGroup.add(ring);
+    }
+    createWireGrommet(-12, 9, 'Sala/HC');
+    createWireGrommet(2.6, 5, 'DHT11');
+    createWireGrommet(0, 0, 'Buzzer');
+    createWireGrommet(13, 9, 'Garaje/SG90');
+    createWireGrommet(-13, -9, 'Dorm');
+    createWireGrommet(13, -9, 'Coc');
+
+    /* --- 4.4 PAREDES EXTERIORES PERIMETRALES (H = 8 cm, Y = 2 a 10 cm) --- */
+    // Altura = 8, Y_centro = 6
+    function createWall(w, h, d, x, y, z) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      // Aplicar textura de corte corrugado a la cara superior (y+)
+      const mesh = new THREE.Mesh(geo, matCardboard);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      upperHouseGroup.add(mesh);
+      return mesh;
+    }
+
+    // 1. Pared Lateral Izquierda (X = -14.8, Z de -11 a +11): con ventana PET en Dormitorio
+    // Tramo sala-frente
+    createWall(0.4, 8, 11, -14.8, 6, 5.5);
+    // Tramo ventana dormitorio: antepecho, dintel y tramo trasero
+    createWall(0.4, 2.5, 7, -14.8, 3.25, -5.5); // Antepecho
+    createWall(0.4, 1.5, 7, -14.8, 9.25, -5.5); // Dintel
+    createWall(0.4, 8, 4, -14.8, 6, -9);        // Esquina trasera
+    // Ventana PET dormitorio (7 x 4 cm)
+    const petWinLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 4, 7), matPETPlastic);
+    petWinLeft.position.set(-14.8, 6.5, -5.5);
+    upperHouseGroup.add(petWinLeft);
+    // Marco de madera (palitos de helado) en ventana
+    const frameL1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4.2, 0.4), matWoodStick);
+    frameL1.position.set(-14.8, 6.5, -2);
+    const frameL2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4.2, 0.4), matWoodStick);
+    frameL2.position.set(-14.8, 6.5, -9);
+    upperHouseGroup.add(frameL1, frameL2);
+
+    // 2. Pared Lateral Derecha (X = +14.8, Garaje y Cocina)
+    createWall(0.4, 8, 22, 14.8, 6, 0);
+
+    // 3. Pared Posterior (Z = -10.8, Dormitorio y Cocina)
+    createWall(15, 8, 0.4, -7.5, 6, -10.8); // Dormitorio posterior
+    // Cocina con ventana PET
+    createWall(4, 8, 0.4, 2, 6, -10.8);
+    createWall(7, 2.5, 0.4, 7.5, 3.25, -10.8); // Antepecho
+    createWall(7, 1.5, 0.4, 7.5, 9.25, -10.8); // Dintel
+    createWall(4, 8, 0.4, 13, 6, -10.8);
+    // Cristal PET Cocina
+    const petWinBack = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 0.1), matPETPlastic);
+    petWinBack.position.set(7.5, 6.5, -10.8);
+    upperHouseGroup.add(petWinBack);
+
+    // 4. Fachada Frontal (Z = +10.8): Sala con puerta, sensor HC-SR04 y Vano libre del Garaje
+    // Muro frontal Sala (X de -15 a +3)
+    // Tramo izquierdo con orificios para HC-SR04
+    createWall(8, 8, 0.4, -11, 6, 10.8);
+    // Dintel sobre puerta principal
+    createWall(5, 2, 0.4, -4.5, 9, 10.8);
+    // Marco de madera para puerta principal
+    const doorFrameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.8, 0.5), matWoodStick);
+    doorFrameLeft.position.set(-7, 5.4, 10.8);
+    const doorFrameRight = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.8, 0.5), matWoodStick);
+    doorFrameRight.position.set(-2, 5.4, 10.8);
+    const doorLintel = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.4, 0.5), matWoodStick);
+    doorLintel.position.set(-4.5, 8.8, 10.8);
+    upperHouseGroup.add(doorFrameLeft, doorFrameRight, doorLintel);
+
+    // Tramo pilar entre puerta y garaje (X de -2 a +3)
+    createWall(5, 8, 0.4, 0.5, 6, 10.8);
+
+    // Dintel superior vano Garaje (X de +3 a +15, ancho 12 cm)
+    createWall(12, 1.6, 0.4, 9, 9.2, 10.8);
+
+    /* --- 4.5 TABIQUES INTERIORES (DIVISIÓN DE 4 ZONAS A 90°) --- */
+    // Tabique transversal (Z = 0): Separa Sala/Garaje al frente de Dormitorio/Cocina al fondo
+    // Tramo izquierdo (Sala - Dormitorio): incluye vano de paso interior
+    createWall(6, 8, 0.4, -12, 6, 0);
+    createWall(4, 2, 0.4, -7, 9, 0); // Dintel paso
+    createWall(5, 8, 0.4, -2.5, 6, 0);
+    // Tramo derecho (Garaje - Cocina): donde se monta el Buzzer Alarma
+    createWall(15, 8, 0.4, 7.5, 6, 0);
+
+    // Tabique longitudinal Garaje - Sala (X = +3, Z de 0 a +11):
+    // Incluye la rejilla de ventilación calada para el sensor DHT11
+    createWall(0.4, 8, 4.5, 3, 6, 2.25); // Tramo trasero
+    createWall(0.4, 8, 3.5, 3, 6, 9.25); // Tramo frontal
+    // Zona central con rejilla calada para el sensor DHT11
+    createWall(0.4, 2.5, 3, 3, 3.25, 6); // Zócalo bajo rejilla
+    createWall(0.4, 2.5, 3, 3, 8.75, 6); // Dintel sobre rejilla
+    // Lamas/persianas de la rejilla de ventilación de cartón
+    for (let l = 0; l < 4; l++) {
+      const louver = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.15, 2.8), matCardboard);
+      louver.rotation.x = 0.4;
+      louver.position.set(3, 4.7 + (l * 0.6), 6);
+      upperHouseGroup.add(louver);
+    }
+
+    // Tabique longitudinal Dormitorio - Cocina (X = 0, Z de -11 a 0)
+    createWall(0.4, 8, 11, 0, 6, -5.5);
+
+    /* --- 4.6 ESCUADRAS TRIANGULARES DE REFUERZO (ANTI-GOLPES EN TRASLADO) --- */
+    function createCornerGusset(x, z, rotY) {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.lineTo(2.0, 0);
+      shape.lineTo(0, 2.0);
+      shape.closePath();
+      const extrudeSettings = { depth: 0.35, bevelEnabled: false };
+      const gussetGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      const gusset = new THREE.Mesh(gussetGeo, matCardboard);
+      gusset.rotation.x = Math.PI / 2;
+      gusset.rotation.z = rotY;
+      gusset.position.set(x, 2.22, z);
+      upperHouseGroup.add(gusset);
+    }
+    // Escuadras en las 4 esquinas perimetrales
+    createCornerGusset(-14.5, 10.5, 0);
+    createCornerGusset(14.5, -10.5, Math.PI);
+    createCornerGusset(-14.5, -10.5, Math.PI / 2);
+    // Escuadras en uniones de tabiques internos
+    createCornerGusset(3.2, 0.2, 0);
+    createCornerGusset(-0.2, -0.2, Math.PI);
+
+    /* ========================================================================
+       5. DETALLE 3D DE SENSORES Y ACTUADORES (UBICACIÓN RIGUROSA)
+       ======================================================================== */
+    // 5.1 GARAJE: SERVOMOTOR SG90 + BARRERA DE PALITO DE MADERA
+    const servoGroup = new THREE.Group();
+    servoGroup.position.set(3.4, 3.8, 10.6);
+    upperHouseGroup.add(servoGroup);
+
+    // Cuerpo azul translúcido SG90
+    const sg90Body = new THREE.Mesh(
+      new THREE.BoxGeometry(1.2, 2.3, 2.2),
+      new THREE.MeshPhysicalMaterial({ color: 0x0284c7, transparent: true, opacity: 0.85, roughness: 0.2 })
+    );
+    servoGroup.add(sg90Body);
+
+    // Eje de salida y cuerno del servo
+    const servoSpline = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.3, 0.4, 16),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 })
+    );
+    servoSpline.rotation.x = Math.PI / 2;
+    servoSpline.position.set(0, 0.7, 1.2);
+    servoGroup.add(servoSpline);
+
+    // Grupo de la barrera levadiza (rota sobre el eje del servo)
+    const barrierPivot = new THREE.Group();
+    barrierPivot.position.set(0, 0.7, 1.4);
+    servoGroup.add(barrierPivot);
+
+    // Brazo del servo (plástico blanco)
+    const servoHorn = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 1.4, 0.15),
+      new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    servoHorn.position.set(0, 0.5, 0);
+    barrierPivot.add(servoHorn);
+
+    // Barrera de palito de helado de madera (11.5 cm de largo)
+    const barrierStick = new THREE.Mesh(
+      new THREE.BoxGeometry(11.5, 0.9, 0.2),
+      matWoodStick
+    );
+    barrierStick.position.set(5.5, 0.6, 0.1);
+    barrierPivot.add(barrierStick);
+
+    // Franjas reflectantes rojas y blancas en la barrera
+    for (let s = 0; s < 4; s++) {
+      const stripe = new THREE.Mesh(
+        new THREE.BoxGeometry(1.4, 0.92, 0.22),
+        new THREE.MeshBasicMaterial({ color: s % 2 === 0 ? 0xef4444 : 0xffffff })
+      );
+      stripe.position.set(2.5 + (s * 2.2), 0.6, 0.1);
+      barrierPivot.add(stripe);
+    }
+
+    // 5.2 LECTOR RFID-RC522 (MURO EXTERIOR LATERAL DEL GARAJE)
+    const rfidGroup = new THREE.Group();
+    rfidGroup.position.set(15.05, 5.5, 6.0); // Muro exterior derecho
+    upperHouseGroup.add(rfidGroup);
+
+    // Placa PCB azul del RC522 (4 x 6 cm)
+    const rfidPcb = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 5.5, 3.8),
+      new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.3 })
+    );
+    rfidGroup.add(rfidPcb);
+
+    // Marco soporte protector de cartón
+    const rfidBracket = new THREE.Mesh(
+      new THREE.BoxGeometry(0.25, 6.0, 4.3),
+      matCardboard
+    );
+    rfidBracket.position.set(-0.1, 0, 0);
+    rfidGroup.add(rfidBracket);
+
+    // Antena serigrafiada y chip RC522
+    const rfidChip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 1.0, 1.0),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.1 })
+    );
+    rfidChip.position.set(0.06, -1.0, 0);
+    rfidGroup.add(rfidChip);
+
+    // LED indicador del RFID
+    const rfidLed = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, 0.2, 0.2),
+      new THREE.MeshBasicMaterial({ color: 0x10b981 })
+    );
+    rfidLed.position.set(0.06, 2.2, -1.2);
+    rfidGroup.add(rfidLed);
+
+    // Tarjeta RFID interactiva (para simulación de pase)
+    const rfidCardMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 5.4, 8.5),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
+    );
+    rfidCardMesh.rotation.y = Math.PI / 2;
+    rfidCardMesh.position.set(18, 5.5, 6.0);
+    rfidCardMesh.visible = false;
+    scene.add(rfidCardMesh);
+
+    // 5.3 SISTEMA ANTIRROBO: HC-SR04 EN FACHADA FRONTAL
+    const hcGroup = new THREE.Group();
+    hcGroup.position.set(-11.5, 5.2, 10.8);
+    upperHouseGroup.add(hcGroup);
+
+    // Placa PCB azul oculta en el interior de la pared
+    const hcPcb = new THREE.Mesh(
+      new THREE.BoxGeometry(4.5, 2.0, 0.15),
+      new THREE.MeshStandardMaterial({ color: 0x1e40af, roughness: 0.4 })
+    );
+    hcPcb.position.set(0, 0, -0.2);
+    hcGroup.add(hcPcb);
+
+    // Dos transductores cilíndricos de aluminio (ojos T y R que asoman al exterior)
+    function createUltrasoundEye(x) {
+      const eyeGroup = new THREE.Group();
+      eyeGroup.position.set(x, 0, 0.25);
+      // Cilindro aluminio
+      const can = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.75, 0.75, 0.7, 24),
+        new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.85, roughness: 0.2 })
+      );
+      can.rotation.x = Math.PI / 2;
+      eyeGroup.add(can);
+      // Malla frontal acústica
+      const grill = new THREE.Mesh(
+        new THREE.CircleGeometry(0.7, 16),
+        new THREE.MeshBasicMaterial({ color: 0x374151 })
+      );
+      grill.position.set(0, 0, 0.36);
+      eyeGroup.add(grill);
+      return eyeGroup;
+    }
+    hcGroup.add(createUltrasoundEye(-1.3));
+    hcGroup.add(createUltrasoundEye(1.3));
+
+    // Ondas de sonar simuladas (anillos expansivos en detección)
+    const sonarRings = [];
+    for (let r = 0; r < 3; r++) {
+      const ringMesh = new THREE.Mesh(
+        new THREE.RingGeometry(1 + r * 1.5, 1.2 + r * 1.5, 32),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0, side: THREE.DoubleSide })
+      );
+      ringMesh.position.set(-11.5, 5.2, 11.5 + (r * 3));
+      scene.add(ringMesh);
+      sonarRings.push(ringMesh);
+    }
+
+    // 5.4 BUZZER PIEZOELÉCTRICO (PARED CENTRAL INTERNA PARA MÁXIMA ACÚSTICA)
+    const buzzerMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.7, 0.7, 0.6, 24),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.3 })
+    );
+    buzzerMesh.rotation.x = Math.PI / 2;
+    buzzerMesh.position.set(5.5, 5.5, 0.2); // Centrado en tabique Garaje-Cocina
+    upperHouseGroup.add(buzzerMesh);
+
+    // Orificio resonador central del buzzer
+    const buzzerHole = new THREE.Mesh(
+      new THREE.CircleGeometry(0.2, 16),
+      new THREE.MeshBasicMaterial({ color: 0x475569 })
+    );
+    buzzerHole.position.set(5.5, 5.5, 0.51);
+    upperHouseGroup.add(buzzerHole);
+
+    // 5.5 SENSOR DE CLIMATIZACIÓN DHT11 (EN SALA TRAS LA REJILLA)
+    const dhtGroup = new THREE.Group();
+    dhtGroup.position.set(2.8, 5.5, 6.0); // En la cara interior de la Sala
+    upperHouseGroup.add(dhtGroup);
+
+    // Carcasa azul distintiva con rejillas del DHT11
+    const dhtBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 1.6, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.4 })
+    );
+    dhtGroup.add(dhtBody);
+
+    // Placa soporte negra
+    const dhtPcb = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 2.2, 1.3),
+      new THREE.MeshStandardMaterial({ color: 0x111827 })
+    );
+    dhtPcb.position.set(0.2, -0.2, 0);
+    dhtGroup.add(dhtPcb);
+
+    /* --- 5.6 ILUMINACIÓN INDEPENDIENTE POR HABITACIÓN (4 LEDs DIFUSOS DE 5mm) --- */
+    const roomLights = {};
+
+    function createRoomLED(roomKey, x, y, z, colorHex, lightColorHex) {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      upperHouseGroup.add(group);
+
+      // Soporte biselado de cartón a 45° en esquina
+      const bracket = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 0.2, 1.2),
+        matCardboard
+      );
+      bracket.rotation.z = Math.PI / 6;
+      group.add(bracket);
+
+      // Cuerpo difuso de resina epoxi del LED de 5mm
+      const ledBulb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.35, 16, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.2,
+          emissive: 0x000000,
+          emissiveIntensity: 0
+        })
+      );
+      ledBulb.position.set(0, -0.3, 0);
+      group.add(ledBulb);
+
+      // Fuente de luz puntual interna
+      const pointLight = new THREE.PointLight(lightColorHex, 0, 14);
+      pointLight.position.set(0, -0.6, 0);
+      pointLight.castShadow = true;
+      pointLight.shadow.bias = -0.002;
+      group.add(pointLight);
+
+      roomLights[roomKey] = {
+        group,
+        bulb: ledBulb,
+        light: pointLight,
+        colorHex,
+        active: false
+      };
+    }
+
+    // Ubicación superior en esquinas de cada habitación (y = 8.5 cm)
+    createRoomLED('sala', -13.5, 8.5, 9.5, 0xfde047, 0xfffbeb);      // Sala: Blanco Cálido
+    createRoomLED('dormitorio', -13.5, 8.5, -9.5, 0xf59e0b, 0xfef3c7); // Dormitorio: Ámbar Suave
+    createRoomLED('cocina', 13.5, 8.5, -9.5, 0x38bdf8, 0xf0f9ff);     // Cocina: Blanco Frío
+    createRoomLED('garaje', 13.5, 8.5, 9.5, 0x10b981, 0xecfdf5);      // Garaje: Blanco Neutro
+
+    /* ========================================================================
+       6. SISTEMA DE LÍNEAS DE COTA Y DIMENSIONES 3D
+       ======================================================================== */
+    const dimensionsGroup = new THREE.Group();
+    dimensionsGroup.visible = false;
+    scene.add(dimensionsGroup);
+
+    function createDimensionLine(p1, p2, text) {
+      const points = [p1, p2];
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const lineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 });
+      const line = new THREE.Line(lineGeo, lineMat);
+      dimensionsGroup.add(line);
+    }
+    // Cota ancho (30 cm)
+    createDimensionLine(new THREE.Vector3(-15, 0.1, 13), new THREE.Vector3(15, 0.1, 13), '30 cm');
+    // Cota profundidad (22 cm)
+    createDimensionLine(new THREE.Vector3(17, 0.1, -11), new THREE.Vector3(17, 0.1, 11), '22 cm');
+    // Cota altura total (10 cm)
+    createDimensionLine(new THREE.Vector3(-16, 0, 11), new THREE.Vector3(-16, 10, 11), '10 cm');
+    // Cota zócalo doble fondo (2 cm)
+    createDimensionLine(new THREE.Vector3(-16, 0, 12), new THREE.Vector3(-16, 2, 12), '2 cm (Doble Fondo)');
+
+    /* ========================================================================
+       7. LÓGICA DE CONTROL DE LA SMART HOME Y ANIMACIONES INTERACTIVAS
+       ======================================================================== */
+    let dobleFondoAbierto = false;
+    let barreraAbierta = false;
+    let alarmaArmada = true;
+    let alarmaDisparada = false;
+
+    // 7.1 Control de Luces LED
+    function toggleLED(room) {
+      audio.playClick();
+      const r = roomLights[room];
+      if (!r) return;
+      r.active = !r.active;
+
+      new TWEEN.Tween(r.light)
+        .to({ intensity: r.active ? 1.4 : 0 }, 250)
+        .start();
+
+      new TWEEN.Tween(r.bulb.material.color)
+        .to(new THREE.Color(r.active ? r.colorHex : 0xffffff), 250)
+        .start();
+
+      r.bulb.material.emissive.setHex(r.active ? r.colorHex : 0x000000);
+      r.bulb.material.emissiveIntensity = r.active ? 1.8 : 0;
+
+      // Actualizar UI del panel
+      const btn = document.getElementById('btn-led-' + (room === 'dormitorio' ? 'dorm' : (room === 'cocina' ? 'coc' : (room === 'garaje' ? 'gar' : 'sala'))));
+      const sub = document.getElementById('st-' + (room === 'dormitorio' ? 'dorm' : (room === 'cocina' ? 'coc' : (room === 'garaje' ? 'gar' : 'sala'))));
+      if (btn) btn.classList.toggle('active', r.active);
+      if (sub) sub.innerText = r.active ? 'ENCENDIDO' : 'Apagado';
+
+      // Contador total
+      let count = 0;
+      for (let k in roomLights) if (roomLights[k].active) count++;
+      const tagTot = document.getElementById('tag-luces-total');
+      if (tagTot) {
+        tagTot.innerText = count + '/4 ON';
+        tagTot.className = 'status ' + (count > 0 ? 'active' : '');
+      }
+    }
+
+    function toggleTodasLasLuces() {
+      let anyOn = false;
+      for (let k in roomLights) if (roomLights[k].active) { anyOn = true; break; }
+      const targetState = !anyOn;
+      for (let k in roomLights) {
+        if (roomLights[k].active !== targetState) toggleLED(k);
+      }
+    }
+
+    // 7.2 Garaje y Servomotor SG90
+    function toggleBarreraServo() {
+      audio.playServoWhine();
+      barreraAbierta = !barreraAbierta;
+      const targetAngle = barreraAbierta ? -Math.PI / 2 : 0;
+
+      new TWEEN.Tween(barrierPivot.rotation)
+        .to({ z: targetAngle }, 600)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      const tag = document.getElementById('tag-barrera');
+      const btn = document.getElementById('btn-barrera');
+      if (barreraAbierta) {
+        tag.innerText = 'Barrera Levantada (90°)';
+        tag.className = 'status active';
+        btn.innerText = 'Bajar Barrera';
+      } else {
+        tag.innerText = 'Barrera Cerrada (0°)';
+        tag.className = 'status';
+        btn.innerText = 'Levantar Barrera';
+      }
+    }
+
+    // Simulación de Pase de Tarjeta RFID RC522
+    function simularPaseRFID() {
+      audio.init();
+      document.getElementById('rfid-status').innerText = 'Validando UID: [A1 B2 C3 D4]...';
+      rfidCardMesh.visible = true;
+      rfidCardMesh.position.set(19, 5.5, 6.0);
+
+      // Animación de la tarjeta acercándose al lector en muro lateral
+      new TWEEN.Tween(rfidCardMesh.position)
+        .to({ x: 15.6 }, 400)
+        .onComplete(() => {
+          audio.playRFIDBeep();
+          // Destello verde en lector
+          rfidLed.material.color.setHex(0x38bdf8);
+          setTimeout(() => rfidLed.material.color.setHex(0x10b981), 400);
+
+          document.getElementById('rfid-status').innerText = '¡Acceso Concedido! Abriendo portón...';
+          if (!barreraAbierta) toggleBarreraServo();
+
+          // Retirar tarjeta tras 1.2 segundos
+          setTimeout(() => {
+            new TWEEN.Tween(rfidCardMesh.position)
+              .to({ x: 22 }, 500)
+              .onComplete(() => {
+                rfidCardMesh.visible = false;
+                document.getElementById('rfid-status').innerText = 'Esperando tarjeta...';
+              })
+              .start();
+          }, 1200);
+        })
+        .start();
+    }
+
+    // 7.3 Sistema Antirrobo: HC-SR04 y Alarma
+    function cambiarDistanciaUltrasonico(val) {
+      document.getElementById('val-distancia').innerText = val + ' cm';
+      const dist = parseFloat(val);
+
+      if (dist < 18 && alarmaArmada && !alarmaDisparada) {
+        dispararAlarma();
+      } else if (dist >= 18 && alarmaDisparada) {
+        // Aléjase el intruso
+      }
+    }
+
+    function forzarDisparoAlarma() {
+      document.getElementById('range-distancia').value = 12;
+      cambiarDistanciaUltrasonico(12);
+      dispararAlarma();
+    }
+
+    function dispararAlarma() {
+      alarmaDisparada = true;
+      audio.playAlarmWarble();
+      const tag = document.getElementById('tag-alarma');
+      tag.innerText = '¡INTRUSO EN FACHADA!';
+      tag.className = 'status alert';
+
+      // Animación visual de sonar en los ojos del HC-SR04
+      sonarRings.forEach((ring, idx) => {
+        ring.material.opacity = 0.8;
+        ring.scale.set(0.2, 0.2, 0.2);
+        new TWEEN.Tween(ring.scale)
+          .to({ x: 1.5, y: 1.5, z: 1.5 }, 600 + (idx * 200))
+          .repeat(3)
+          .yoyo(false)
+          .onComplete(() => { ring.material.opacity = 0; })
+          .start();
+      });
+
+      // Vibración acústica simulada del Buzzer central
+      new TWEEN.Tween(buzzerMesh.scale)
+        .to({ x: 1.15, y: 1.15, z: 1.15 }, 80)
+        .repeat(10)
+        .yoyo(true)
+        .start();
+    }
+
+    function resetearAlarma() {
+      alarmaDisparada = false;
+      document.getElementById('range-distancia').value = 35;
+      document.getElementById('val-distancia').innerText = '35 cm';
+      const tag = document.getElementById('tag-alarma');
+      tag.innerText = 'VIGILANDO';
+      tag.className = 'status active';
+      sonarRings.forEach(r => r.material.opacity = 0);
+    }
+
+    // 7.4 Climatización DHT11
+    function cambiarTemperatura(val) {
+      document.getElementById('val-temperatura').innerText = val + ' °C';
+      const t = parseFloat(val);
+      const tag = document.getElementById('tag-clima');
+      if (t > 30) {
+        tag.innerText = 'Alerta Calor';
+        tag.className = 'status alert';
+      } else if (t < 18) {
+        tag.innerText = 'Frío';
+        tag.className = 'status';
+      } else {
+        tag.innerText = 'Confort';
+        tag.className = 'status active';
+      }
+    }
+
+    // 7.5 Despiece / Vista del Doble Fondo (Zócalo 2 cm)
+    function toggleDobleFondo() {
+      audio.playClick();
+      dobleFondoAbierto = !dobleFondoAbierto;
+      const targetY = dobleFondoAbierto ? 9.5 : 0;
+
+      new TWEEN.Tween(upperHouseGroup.position)
+        .to({ y: targetY }, 700)
+        .easing(TWEEN.Easing.Cubic.InOut)
+        .start();
+
+      const btn = document.getElementById('btn-open-drawer');
+      const tag = document.getElementById('tag-falsofondo');
+      if (dobleFondoAbierto) {
+        btn.innerText = '🔒 Cerrar y Proteger Cableado';
+        tag.innerText = 'EXPUESTO (INSPECCIÓN)';
+        tag.className = 'status alert';
+      } else {
+        btn.innerText = '🔓 Abrir Compartimento Doble Fondo';
+        tag.innerText = 'Cerrado (Listo para Mochila)';
+        tag.className = 'status active';
+      }
+    }
+
+    /* ========================================================================
+       8. MODOS VISUALES Y PRESETS DE CÁMARA
+       ======================================================================== */
+    function setCameraPreset(mode) {
+      audio.playClick();
+      document.querySelectorAll('#bottom-bar .pill-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('cam-' + mode);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      let targetPos = new THREE.Vector3(28, 32, 42);
+      let targetLook = new THREE.Vector3(0, 5, 0);
+
+      switch (mode) {
+        case 'iso':
+          targetPos.set(28, 32, 42);
+          targetLook.set(0, 5, 0);
+          break;
+        case 'top':
+          targetPos.set(0, 55, 0.01);
+          targetLook.set(0, 5, 0);
+          break;
+        case 'front':
+          targetPos.set(0, 8, 38);
+          targetLook.set(0, 6, 0);
+          break;
+        case 'garage':
+          targetPos.set(22, 10, 16);
+          targetLook.set(9, 6, 8);
+          break;
+        case 'bottom':
+          if (!dobleFondoAbierto) toggleDobleFondo();
+          targetPos.set(0, 18, 26);
+          targetLook.set(0, 2, 0);
+          break;
+      }
+
+      new TWEEN.Tween(camera.position)
+        .to(targetPos, 800)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+
+      new TWEEN.Tween(controls.target)
+        .to(targetLook, 800)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+
+    function setVisualMode(mode) {
+      audio.playClick();
+      document.querySelectorAll('#bottom-bar .floating-pill:last-child .pill-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('mode-' + mode).classList.add('active');
+
+      dimensionsGroup.visible = (mode === 'dimensions');
+
+      upperHouseGroup.traverse(child => {
+        if (child.isMesh) {
+          if (mode === 'materials') {
+            // Colores codificados por material reciclado
+            if (child.material === matCardboard) {
+              child.material = new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.8 }); // Cartón corrugado
+            } else if (child.material === matWoodStick) {
+              child.material = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.5 }); // Palitos de madera
+            } else if (child.material === matPETPlastic) {
+              child.material = new THREE.MeshPhysicalMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6 }); // PET
+            }
+          } else if (mode === 'xray') {
+            child.material.transparent = true;
+            child.material.opacity = 0.35;
+            child.material.wireframe = true;
+          } else {
+            // Restaurar materiales realistas originales
+            child.material.transparent = (child.material === matPETPlastic);
+            child.material.opacity = (child.material === matPETPlastic) ? 0.45 : 1.0;
+            child.material.wireframe = false;
+          }
+        }
+      });
+    }
+
+    /* ========================================================================
+       9. TOUR GUIADO INTERACTIVO
+       ======================================================================== */
+    const tourSteps = [
+      {
+        cam: 'iso',
+        title: '🏠 Bienvenida al Prototipo DIY',
+        desc: 'Esta maqueta de 30x22x10 cm está diseñada con cartón corrugado reciclado, madera de palitos de helado y plástico de botellas PET. Su distribución sin techo permite observar la domótica en tiempo real.'
+      },
+      {
+        cam: 'bottom',
+        title: '📦 Sistema de Doble Fondo Técnico (2 cm)',
+        desc: 'El zócalo inferior aloja la protoboard, el microcontrolador ESP32 y el cableado. Todos los cables pasan por ojales del suelo hacia abajo, garantizando que puedas llevar la maqueta en una mochila sin desconectar nada.'
+      },
+      {
+        cam: 'garage',
+        title: '🚗 Garaje con Barrera Levadiza y RFID',
+        desc: 'Un servomotor SG90 eleva la barrera hecha con un palito de helado. En la pared exterior lateral, un lector RFID-RC522 permite validar tarjetas de acceso vehicular.'
+      },
+      {
+        cam: 'front',
+        title: '🚨 Radar Antirrobo en Fachada',
+        desc: 'Dos orificios precisos de 16 mm albergan los transductores del HC-SR04 apuntando a la entrada. Si detecta presencia a menos de 18 cm, activa el buzzer central.'
+      },
+      {
+        cam: 'iso',
+        title: '🌡️ Climatización e Iluminación 4 Zonas',
+        desc: 'El sensor DHT11 está protegido tras una rejilla calada en el cartón, lejos del calor de los LEDs difusos de 5mm, asegurando lecturas térmicas fidedignas.'
+      }
+    ];
+    let currentTourStep = 0;
+
+    function iniciarTourGuiado() {
+      currentTourStep = 0;
+      mostrarPasoTour(currentTourStep);
+    }
+
+    function mostrarPasoTour(idx) {
+      const step = tourSteps[idx];
+      setCameraPreset(step.cam);
+      // Notificación modal ligera
+      const existing = document.getElementById('tour-popup');
+      if (existing) existing.remove();
+
+      const popup = document.createElement('div');
+      popup.id = 'tour-popup';
+      popup.style.cssText = `
+        position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.96); border: 1px solid #38bdf8;
+        padding: 16px 20px; border-radius: 14px; max-width: 440px; width: 90%;
+        color: #fff; z-index: 150; box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        backdrop-filter: blur(12px);
+      `;
+      popup.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h4 style="font-size:14px; color:#38bdf8; font-weight:700;">${step.title} (${idx + 1}/${tourSteps.length})</h4>
+          <button onclick="document.getElementById('tour-popup').remove()" style="background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer;">✕</button>
+        </div>
+        <p style="font-size:12px; line-height:1.5; color:#cbd5e1; margin-bottom:12px;">${step.desc}</p>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          ${idx > 0 ? `<button onclick="mostrarPasoTour(${idx - 1})" class="btn-icon" style="padding:6px 12px;">Anterior</button>` : ''}
+          ${idx < tourSteps.length - 1 
+            ? `<button onclick="mostrarPasoTour(${idx + 1})" class="btn-action" style="width:auto; padding:6px 14px;">Siguiente Paso ➔</button>` 
+            : `<button onclick="document.getElementById('tour-popup').remove()" class="btn-action" style="width:auto; padding:6px 14px; background:#10b981; border-color:#10b981;">¡Finalizar Tour! ✓</button>`
+          }
+        </div>
+      `;
+      document.body.appendChild(popup);
+    }
+
+    /* ========================================================================
+       10. CONTROL DE MODALES Y RESPONSIVIDAD
+       ======================================================================== */
+    function openModal(id) {
+      audio.playClick();
+      document.getElementById('modal-' + id).classList.add('active');
+    }
+    function closeModal(id) {
+      audio.playClick();
+      document.getElementById('modal-' + id).classList.remove('active');
+    }
+    function toggleSidebar() {
+      audio.playClick();
+      document.getElementById('sidebar-controls').classList.toggle('collapsed');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    /* ========================================================================
+       11. BUCLE DE ANIMACIÓN Y RENDERIZADO (60 FPS)
+       ======================================================================== */
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      TWEEN.update();
+      controls.update();
+
+      // Animación suave de luz ambiental simulando respiración sutil
+      if (alarmaDisparada) {
+        dirLight.color.setHex((Math.sin(clock.getElapsedTime() * 12) > 0) ? 0xef4444 : 0xfff7ed);
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Encender luz de la Sala por defecto para bienvenida cálida
+    setTimeout(() => { toggleLED('sala'); }, 600);
+  </script>
+</body>
+</html>

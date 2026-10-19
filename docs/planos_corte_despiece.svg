@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="100%" height="100%" style="background-color: #f8fafc; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <!-- Pattern para textura de cartón kraft -->
+    <pattern id="cardboardPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="#d4a373" opacity="0.3"/>
+      <line x1="0" y1="5" x2="20" y2="5" stroke="#bc6c25" stroke-width="0.5" opacity="0.2"/>
+      <line x1="0" y1="10" x2="20" y2="10" stroke="#bc6c25" stroke-width="0.5" opacity="0.2"/>
+      <line x1="0" y1="15" x2="20" y2="15" stroke="#bc6c25" stroke-width="0.5" opacity="0.2"/>
+    </pattern>
+    <!-- Pattern para madera palitos -->
+    <pattern id="woodPattern" width="30" height="10" patternUnits="userSpaceOnUse">
+      <rect width="30" height="10" fill="#e9c46a" opacity="0.4"/>
+      <line x1="0" y1="3" x2="30" y2="3" stroke="#b08968" stroke-width="0.8" opacity="0.3"/>
+      <line x1="0" y1="7" x2="30" y2="7" stroke="#b08968" stroke-width="0.8" opacity="0.3"/>
+    </pattern>
+    <!-- Marcadores de cota -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0284c7" />
+    </marker>
+  </defs>
+
+  <!-- Encabezado / Título del Plano -->
+  <rect x="30" y="25" width="1140" height="75" rx="8" fill="#1e293b"/>
+  <text x="60" y="58" font-size="22" font-weight="bold" fill="#38bdf8">PLANO DE CORTE Y DESPIECE DIY: MAQUETA SMART HOME PORTÁTIL</text>
+  <text x="60" y="84" font-size="14" fill="#94a3b8">Dimensiones Generales: 30.0 cm x 22.0 cm x 10.0 cm | Doble Fondo Técnico: 2.0 cm | Materiales: Cartón Corrugado B/C, Madera y PET</text>
+
+  <!-- Leyenda de colores -->
+  <g transform="translate(850, 40)">
+    <rect x="0" y="0" width="18" height="18" fill="#d4a373" stroke="#8c5825" stroke-width="1"/>
+    <text x="26" y="14" font-size="12" fill="#e2e8f0">Cartón Corrugado</text>
+    <rect x="0" y="24" width="18" height="18" fill="#e9c46a" stroke="#b08968" stroke-width="1"/>
+    <text x="26" y="38" font-size="12" fill="#e2e8f0">Palitos Helado (Madera)</text>
+    <rect x="140" y="0" width="18" height="18" fill="#38bdf8" opacity="0.3" stroke="#0284c7" stroke-width="1"/>
+    <text x="166" y="14" font-size="12" fill="#e2e8f0">Plástico PET Botella</text>
+    <line x1="140" y1="33" x2="158" y2="33" stroke="#dc2626" stroke-width="2" stroke-dasharray="4,3"/>
+    <text x="166" y="38" font-size="12" fill="#e2e8f0">Corte / Ranura Encastre</text>
+  </g>
+
+  <!-- SECCIÓN 1: BASE INFERIOR Y PISO HABITABLE -->
+  <g transform="translate(50, 130)">
+    <!-- Marco de grupo -->
+    <rect x="0" y="0" width="460" height="340" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="16" font-weight="bold" fill="#0f172a">1. BASE INFERIOR Y PISO HABITABLE</text>
+    
+    <!-- Pieza A: Base Inferior (30 x 22 cm) -->
+    <rect x="30" y="50" width="180" height="132" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1.5"/>
+    <text x="120" y="110" font-size="13" font-weight="bold" fill="#431407" text-anchor="middle">Base Inferior</text>
+    <text x="120" y="128" font-size="11" fill="#78350f" text-anchor="middle">30.0 x 22.0 cm (x1)</text>
+
+    <!-- Cotas Pieza A -->
+    <line x1="30" y1="42" x2="210" y2="42" stroke="#0284c7" stroke-width="1.2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="120" y="38" font-size="10" fill="#0284c7" text-anchor="middle">30.0 cm</text>
+    <line x1="218" y1="50" x2="218" y2="182" stroke="#0284c7" stroke-width="1.2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <text x="224" y="120" font-size="10" fill="#0284c7">22.0 cm</text>
+
+    <!-- Pieza B: Piso Habitable con Pasacables (29.3 x 21.3 cm) -->
+    <g transform="translate(245, 50)">
+      <rect x="0" y="0" width="176" height="128" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1.5"/>
+      <text x="88" y="55" font-size="13" font-weight="bold" fill="#431407" text-anchor="middle">Piso Habitable</text>
+      <text x="88" y="73" font-size="11" fill="#78350f" text-anchor="middle">29.3 x 21.3 cm (x1)</text>
+
+      <!-- Ojales pasacables -->
+      <circle cx="20" cy="110" r="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+      <text x="20" y="123" font-size="8" fill="#64748b" text-anchor="middle">Sala/HC</text>
+
+      <circle cx="70" cy="70" r="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+      <text x="70" y="83" font-size="8" fill="#64748b" text-anchor="middle">DHT11</text>
+
+      <circle cx="120" cy="70" r="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+      <text x="120" y="83" font-size="8" fill="#64748b" text-anchor="middle">Buzzer</text>
+
+      <circle cx="160" cy="110" r="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+      <text x="160" y="123" font-size="8" fill="#64748b" text-anchor="middle">SG90/RFID</text>
+
+      <circle cx="20" cy="20" r="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+      <text x="35" y="24" font-size="8" fill="#64748b">Dorm</text>
+
+      <circle cx="155" cy="20" r="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+      <text x="140" y="24" font-size="8" fill="#64748b">Coc</text>
+    </g>
+
+    <!-- Zócalos Doble Fondo (h = 2.0 cm) -->
+    <text x="20" y="215" font-size="13" font-weight="bold" fill="#0f172a">Zócalos del Doble Fondo (h = 2.0 cm):</text>
+    <rect x="30" y="230" width="180" height="15" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1"/>
+    <text x="120" y="242" font-size="10" fill="#431407" text-anchor="middle">Frontal / Trasero: 30.0 cm x 2.0 cm (x2)</text>
+
+    <rect x="30" y="260" width="130" height="15" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1"/>
+    <text x="95" y="272" font-size="10" fill="#431407" text-anchor="middle">Laterales: 21.3 cm x 2.0 cm (x2)</text>
+
+    <!-- Escuadras esquineras -->
+    <polygon points="300,230 330,230 300,260" fill="#d4a373" stroke="#8c5825" stroke-width="1.2"/>
+    <text x="340" y="245" font-size="11" font-weight="bold" fill="#0f172a">Escuadras Triangulares (x16)</text>
+    <text x="340" y="262" font-size="10" fill="#64748b">Catetos: 2.5 x 2.5 cm (Refuerzo anti-golpes)</text>
+  </g>
+
+  <!-- SECCIÓN 2: PAREDES EXTERIORES PERIMETRALES -->
+  <g transform="translate(540, 130)">
+    <rect x="0" y="0" width="610" height="340" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="16" font-weight="bold" fill="#0f172a">2. PAREDES EXTERIORES (ALTURA 8.0 cm)</text>
+
+    <!-- Fachada Frontal (Sala + Garaje) -->
+    <g transform="translate(25, 50)">
+      <rect x="0" y="0" width="360" height="96" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1.5"/>
+      <text x="10" y="20" font-size="11" font-weight="bold" fill="#0f172a">FACHADA FRONTAL (30.0 x 8.0 cm)</text>
+
+      <!-- Puerta Sala -->
+      <rect x="140" y="18" width="48" height="78" fill="#f8fafc" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <!-- Marco madera puerta -->
+      <rect x="138" y="16" width="52" height="6" fill="url(#woodPattern)" stroke="#b08968" stroke-width="0.8"/>
+      <text x="164" y="60" font-size="10" fill="#dc2626" text-anchor="middle">Puerta</text>
+
+      <!-- Perforaciones HC-SR04 -->
+      <circle cx="50" cy="50" r="10" fill="#f8fafc" stroke="#dc2626" stroke-width="1.5"/>
+      <circle cx="85" cy="50" r="10" fill="#f8fafc" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="67" y="75" font-size="9" fill="#0284c7" text-anchor="middle">HC-SR04 (Ø16mm)</text>
+
+      <!-- Portón Garaje (Abierto con dintel) -->
+      <rect x="220" y="16" width="140" height="80" fill="#f8fafc" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <!-- Barrera levadiza de madera -->
+      <rect x="230" y="80" width="125" height="10" rx="3" fill="url(#woodPattern)" stroke="#b08968" stroke-width="1"/>
+      <text x="290" y="55" font-size="10" fill="#dc2626" text-anchor="middle">Vano Garaje (12 cm)</text>
+      <text x="290" y="88" font-size="8" fill="#78350f" text-anchor="middle">Barrera Palito Madera</text>
+    </g>
+
+    <!-- Muro Posterior con Ventana Cocina -->
+    <g transform="translate(25, 165)">
+      <rect x="0" y="0" width="360" height="75" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1.5"/>
+      <text x="10" y="18" font-size="11" font-weight="bold" fill="#0f172a">PARED POSTERIOR (30.0 x 8.0 cm)</text>
+      <!-- Ventana Cocina -->
+      <rect x="220" y="20" width="72" height="48" fill="#38bdf8" opacity="0.3" stroke="#0284c7" stroke-width="1.5"/>
+      <!-- Marco madera ventana -->
+      <rect x="218" y="18" width="76" height="52" fill="none" stroke="#b08968" stroke-width="2"/>
+      <line x1="256" y1="18" x2="256" y2="70" stroke="#b08968" stroke-width="1.5"/>
+      <line x1="218" y1="44" x2="294" y2="44" stroke="#b08968" stroke-width="1.5"/>
+      <text x="256" y="58" font-size="9" fill="#0369a1" text-anchor="middle">PET + Madera</text>
+      
+      <!-- Entrada USB en doble fondo posterior -->
+      <rect x="30" y="65" width="20" height="10" fill="#0f172a"/>
+      <text x="55" y="72" font-size="8" fill="#64748b">Paso USB 5V</text>
+    </g>
+
+    <!-- Muro Lateral Derecho con Soporte RFID -->
+    <g transform="translate(25, 255)">
+      <rect x="0" y="0" width="264" height="70" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1.5"/>
+      <text x="10" y="18" font-size="11" font-weight="bold" fill="#0f172a">LATERAL DERECHO (GARAJE)</text>
+      <!-- Soporte RFID RC522 en muro exterior -->
+      <rect x="50" y="22" width="48" height="38" rx="2" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1"/>
+      <text x="74" y="44" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">RFID</text>
+      <text x="74" y="54" font-size="7" fill="#93c5fd" text-anchor="middle">RC522</text>
+      <text x="110" y="42" font-size="9" fill="#0f172a">Soporte plano exterior</text>
+      <text x="110" y="54" font-size="8" fill="#64748b">Cables pasan a falso fondo</text>
+    </g>
+  </g>
+
+  <!-- SECCIÓN 3: TABIQUES INTERIORES Y DETALLE REJILLA CLIMATIZACIÓN -->
+  <g transform="translate(50, 495)">
+    <rect x="0" y="0" width="600" height="375" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="16" font-weight="bold" fill="#0f172a">3. TABIQUES INTERIORES Y REJILLA VENTILACIÓN (DHT11)</text>
+
+    <!-- Tabique Transversal (Eje Z=0, Sala-Dormitorio y Garaje-Cocina) -->
+    <g transform="translate(30, 50)">
+      <rect x="0" y="0" width="360" height="85" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1.5"/>
+      <text x="15" y="20" font-size="11" font-weight="bold" fill="#0f172a">TABIQUE TRANSVERSAL CENTRAL (30.0 x 8.0 cm)</text>
+      
+      <!-- Puerta paso interior Sala - Dormitorio -->
+      <rect x="80" y="20" width="45" height="65" fill="#f8fafc" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="102" y="55" font-size="9" fill="#dc2626" text-anchor="middle">Paso Dorm</text>
+
+      <!-- Alojamiento central Buzzer Alarma -->
+      <circle cx="240" cy="45" r="14" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.5"/>
+      <circle cx="240" cy="45" r="4" fill="#64748b"/>
+      <text x="240" y="70" font-size="9" font-weight="bold" fill="#0f172a" text-anchor="middle">Buzzer Alarma</text>
+      <text x="240" y="80" font-size="8" fill="#64748b" text-anchor="middle">(Propagación Acústica Óptima)</text>
+    </g>
+
+    <!-- Tabique Longitudinal Garaje - Sala con Rejilla DHT11 -->
+    <g transform="translate(30, 160)">
+      <rect x="0" y="0" width="220" height="85" fill="url(#cardboardPattern)" stroke="#8c5825" stroke-width="1.5"/>
+      <text x="10" y="18" font-size="11" font-weight="bold" fill="#0f172a">TABIQUE GARAJE - SALA (11.0 x 8.0 cm)</text>
+      
+      <!-- Detalle de Rejilla de ventilación en cartón -->
+      <g transform="translate(130, 25)">
+        <rect x="-5" y="-5" width="60" height="50" rx="3" fill="#fef3c7" stroke="#d97706" stroke-width="1"/>
+        <!-- Ranuras de ventilación -->
+        <line x1="5" y1="5" x2="45" y2="5" stroke="#78350f" stroke-width="2.5"/>
+        <line x1="5" y1="13" x2="45" y2="13" stroke="#78350f" stroke-width="2.5"/>
+        <line x1="5" y1="21" x2="45" y2="21" stroke="#78350f" stroke-width="2.5"/>
+        <line x1="5" y1="29" x2="45" y2="29" stroke="#78350f" stroke-width="2.5"/>
+        <text x="25" y="42" font-size="8" font-weight="bold" fill="#92400e" text-anchor="middle">Rejilla DHT11</text>
+      </g>
+      <text x="15" y="45" font-size="9" fill="#0f172a">Rejilla calada en cartón</text>
+      <text x="15" y="60" font-size="8" fill="#64748b">Lejos de LEDs de techo</text>
+      <text x="15" y="72" font-size="8" fill="#64748b">(Sin interferencia térmica)</text>
+    </g>
+
+    <!-- Soporte superior para LEDs difusos de 5mm -->
+    <g transform="translate(30, 265)">
+      <rect x="0" y="0" width="540" height="90" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+      <text x="15" y="22" font-size="12" font-weight="bold" fill="#0f172a">SOPORTES DE ESQUINA PARA LEDs DIFUSOS DE 5mm (x4 ZONAS)</text>
+      <text x="15" y="42" font-size="10" fill="#334155">Cada habitación cuenta con un bisel de cartón triangular a 45° a 7.0 cm de altura con un orificio de 5mm.</text>
+      
+      <!-- Dibujo esquemático del soporte LED -->
+      <g transform="translate(420, 20)">
+        <polygon points="0,0 50,0 0,50" fill="#d4a373" stroke="#8c5825" stroke-width="1.2"/>
+        <circle cx="20" cy="20" r="6" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+        <line x1="20" y1="26" x2="20" y2="45" stroke="#ef4444" stroke-width="1.5"/>
+        <line x1="23" y1="26" x2="23" y2="50" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="60" y="25" font-size="10" font-weight="bold" fill="#d97706">LED 5mm</text>
+        <text x="60" y="40" font-size="9" fill="#64748b">Cables al falso fondo</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- SECCIÓN 4: RESUMEN DE INTEGRACIÓN Y ESPECIFICACIONES CLAVE -->
+  <g transform="translate(670, 495)">
+    <rect x="0" y="0" width="480" height="375" rx="6" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="16" font-weight="bold" fill="#0f172a">4. GUÍA RÁPIDA DE CORTE Y RECOMENDACIONES</text>
+
+    <g transform="translate(20, 45)">
+      <circle cx="12" cy="12" r="10" fill="#0284c7"/>
+      <text x="12" y="16" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">1</text>
+      <text x="32" y="15" font-size="11" font-weight="bold" fill="#0f172a">Sentido de la Onda del Cartón:</text>
+      <text x="32" y="32" font-size="10" fill="#475569">Corta las paredes con la onda vertical para máxima resistencia a la compresión.</text>
+    </g>
+
+    <g transform="translate(20, 95)">
+      <circle cx="12" cy="12" r="10" fill="#0284c7"/>
+      <text x="12" y="16" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">2</text>
+      <text x="32" y="15" font-size="11" font-weight="bold" fill="#0f172a">Uniones y Escuadras a 90 Grados:</text>
+      <text x="32" y="32" font-size="10" fill="#475569">Refuerza cada arista interior con escuadras triangulares de 2.5 x 2.5 cm con pegamento caliente.</text>
+    </g>
+
+    <g transform="translate(20, 145)">
+      <circle cx="12" cy="12" r="10" fill="#0284c7"/>
+      <text x="12" y="16" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">3</text>
+      <text x="32" y="15" font-size="11" font-weight="bold" fill="#0f172a">Portabilidad en Mochila (Zero-Loose-Wires):</text>
+      <text x="32" y="32" font-size="10" fill="#475569">Todos los cables DuPont se canalizan directamente por los ojales del suelo hacia el zócalo de 2 cm.</text>
+    </g>
+
+    <g transform="translate(20, 195)">
+      <circle cx="12" cy="12" r="10" fill="#0284c7"/>
+      <text x="12" y="16" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text>
+      <text x="32" y="15" font-size="11" font-weight="bold" fill="#0f172a">Ventanas con Botellas PET Recicladas:</text>
+      <text x="32" y="32" font-size="10" fill="#475569">Desengrasar el plástico con alcohol antes de pegar entre los listones de madera.</text>
+    </g>
+
+    <g transform="translate(20, 245)">
+      <circle cx="12" cy="12" r="10" fill="#0284c7"/>
+      <text x="12" y="16" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">5</text>
+      <text x="32" y="15" font-size="11" font-weight="bold" fill="#0f172a">Alineación del Servomotor SG90:</text>
+      <text x="32" y="32" font-size="10" fill="#475569">Calibra el servo a 0° antes de atornillar el palito barrera para evitar forzar los engranajes plásticos.</text>
+    </g>
+
+    <!-- Cuadro de firma / Proyecto -->
+    <g transform="translate(20, 295)">
+      <rect x="0" y="0" width="440" height="60" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+      <text x="15" y="24" font-size="11" font-weight="bold" fill="#1e293b">UNAN ROBÓTICA - PROYECTO SMART HOME EDUCATIVA</text>
+      <text x="15" y="44" font-size="10" fill="#64748b">Diseño Open-Source y Modular | Escala aprox. 1:15 | Prototipo Listo para Fabricar</text>
+    </g>
+  </g>
+</svg>
